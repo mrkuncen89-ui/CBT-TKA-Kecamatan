@@ -1,0 +1,377 @@
+<?php
+// ============================================================
+// sekolah/cetak_hasil.php — Cetak Peringkat Nilai Peserta
+// ============================================================
+require_once __DIR__ . '/../core/session.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../core/auth.php';
+require_once __DIR__ . '/../core/helper.php';
+
+requireLogin('sekolah');
+$user      = getCurrentUser();
+$sekolahId = $user['sekolah_id'];
+
+// Ambil data sekolah
+$sekolah      = $conn->query("SELECT * FROM sekolah WHERE id=$sekolahId LIMIT 1")->fetch_assoc();
+$namaSekolah  = $sekolah['nama_sekolah'] ?? 'Sekolah';
+$namaAplikasi = getSetting($conn, 'nama_aplikasi', 'TKA Kecamatan');
+$namaKec      = getSetting($conn, 'nama_kecamatan', 'Kecamatan');
+$tahunPel     = getSetting($conn, 'tahun_pelajaran', date('Y') . '/' . (date('Y') + 1));
+$kkm          = (int)getSetting($conn, 'kkm', '60');
+
+// Filter kategori
+$katId = (int)($_GET['kategori_id'] ?? 0);
+$katWhere = $katId ? "AND jd.kategori_id = $katId" : '';
+
+// Query data hasil — join ke jadwal dan kategori untuk dapat nama mapel
+$sql = "
+    SELECT h.nilai, h.waktu_selesai,
+           h.jml_benar, h.jml_salah, h.jml_kosong, h.total_soal,
+           FLOOR(h.durasi_detik / 60) AS durasi_menit,
+           p.nama, p.kode_peserta, p.kelas,
+           k.nama_kategori
+    FROM hasil_ujian h
+    JOIN peserta p ON p.id = h.peserta_id
+    LEFT JOIN jadwal_ujian jd ON jd.id = h.jadwal_id
+    LEFT JOIN kategori_soal k ON k.id = jd.kategori_id
+    WHERE p.sekolah_id = $sekolahId
+    $katWhere
+    ORDER BY h.nilai DESC, h.waktu_selesai ASC
+";
+$hasil = $conn->query($sql);
+$rows  = [];
+if ($hasil) while ($r = $hasil->fetch_assoc()) $rows[] = $r;
+
+// Statistik
+$total  = count($rows);
+$nilais = array_column($rows, 'nilai');
+$rata   = $total > 0 ? round(array_sum($nilais) / $total, 2) : 0;
+$maks   = $total > 0 ? max($nilais) : 0;
+$min    = $total > 0 ? min($nilais) : 0;
+$lulus  = count(array_filter($nilais, fn($n) => $n >= $kkm));
+
+// Nama kategori filter
+$namaKat = 'Semua Kategori';
+if ($katId) {
+    $kr = $conn->query("SELECT nama_kategori FROM kategori_soal WHERE id=$katId LIMIT 1");
+    if ($kr && $kr->num_rows > 0) $namaKat = $kr->fetch_assoc()['nama_kategori'];
+}
+
+$tanggalCetak = date('d/m/Y H:i');
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cetak Hasil Ujian — <?= e($namaSekolah) ?></title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    background: #fff;
+    padding: 20px 30px;
+  }
+
+  /* ── Header dokumen ── */
+  .doc-header {
+    border-top: 4px solid #1e3a8a;
+    border-bottom: 2px solid #1e3a8a;
+    padding: 10px 0;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .doc-header .judul { flex: 1; }
+  .doc-header h1 { font-size: 14pt; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin-bottom: 2px; }
+  .doc-header h2 { font-size: 11pt; font-weight: 700; color: #1e3a8a; margin-bottom: 2px; }
+  .doc-header p  { font-size: 9pt; color: #555; }
+  .doc-header .meta { text-align: right; font-size: 9pt; color: #555; line-height: 1.7; }
+
+  /* ── Info bar ── */
+  .info-bar {
+    display: flex;
+    gap: 0;
+    border: 1px solid #c7d7f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    font-size: 9.5pt;
+  }
+  .info-bar div {
+    flex: 1;
+    padding: 6px 12px;
+    background: #eff6ff;
+    border-right: 1px solid #c7d7f0;
+  }
+  .info-bar div:last-child { border-right: none; }
+  .info-bar .lbl { font-weight: 700; color: #1e3a8a; font-size: 8pt; text-transform: uppercase; display: block; margin-bottom: 1px; }
+  .info-bar .val { font-weight: 700; color: #111; font-size: 11pt; }
+
+  /* ── Tabel ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  thead tr {
+    background: #1e3a8a;
+    color: #fff;
+  }
+  thead th {
+    padding: 7px 8px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.3px;
+    border: 1px solid #163071;
+  }
+  thead th.center { text-align: center; }
+
+  tbody tr:nth-child(even) { background: #f0f5ff; }
+  tbody tr:nth-child(odd)  { background: #fff; }
+  tbody tr.lulus-row { }
+  tbody tr.gagal-row { background: #fff5f5 !important; }
+
+  tbody td {
+    padding: 6px 8px;
+    border: 1px solid #dbeafe;
+    vertical-align: middle;
+  }
+  tbody td.center { text-align: center; }
+  tbody td.right  { text-align: right; }
+
+  .rank-medal { font-size: 14pt; }
+  .rank-num   { font-weight: 700; color: #1e3a8a; }
+
+  .kode { font-family: 'Courier New', monospace; font-size: 9pt; color: #475569; }
+  .nama-peserta { font-weight: 700; }
+
+  .nilai-cell { font-weight: 900; font-size: 11pt; color: #1e3a8a; text-align: center; }
+  .benar  { color: #15803d; font-weight: 700; text-align: center; }
+  .salah  { color: #b91c1c; font-weight: 700; text-align: center; }
+
+  .predikat {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.3px;
+  }
+  .pred-A, .pred-B { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+  .pred-C { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+  .pred-D { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+  .pred-E { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+  .kkm-line td { background: #fef3c7 !important; border-top: 2px dashed #f59e0b !important; }
+  .kkm-line td span { font-size: 8pt; color: #92400e; font-weight: 700; }
+
+  /* ── Footer tabel ── */
+  .tfoot-stat td {
+    background: #1e3a8a !important;
+    color: #fff;
+    font-weight: 700;
+    padding: 6px 8px;
+    border: 1px solid #163071;
+    font-size: 9pt;
+  }
+
+  /* ── Footer dokumen ── */
+  .doc-footer {
+    margin-top: 24px;
+    border-top: 1px solid #c7d7f0;
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    color: #555;
+  }
+  .ttd-box { text-align: center; width: 180px; }
+  .ttd-box .ttd-space { height: 50px; border-bottom: 1px solid #333; margin: 0 20px 4px; }
+  .ttd-box p { font-size: 9pt; color: #333; }
+
+  /* ── Tombol (tidak dicetak) ── */
+  .no-print {
+    text-align: center;
+    padding: 16px 0;
+    margin-bottom: 16px;
+    background: #f8fafc;
+    border: 1px dashed #c7d7f0;
+    border-radius: 6px;
+  }
+  .no-print button {
+    background: #1e3a8a;
+    color: #fff;
+    border: none;
+    padding: 10px 32px;
+    font-size: 12pt;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 6px;
+  }
+  .no-print button.btn-back {
+    background: #fff;
+    color: #1e3a8a;
+    border: 2px solid #1e3a8a;
+  }
+  .no-print button:hover { opacity: .85; }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 10px 16px; }
+    @page { margin: 1.2cm 1.4cm; size: A4 portrait; }
+    tbody tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Tombol cetak (tidak muncul saat print) -->
+<div class="no-print">
+  <button onclick="window.print()">🖨️ &nbsp;Cetak / Print</button>
+  <button class="btn-back" onclick="history.back()">← Kembali</button>
+</div>
+
+<!-- Header Dokumen -->
+<div class="doc-header">
+  <div class="judul">
+    <h1><?= e($namaAplikasi) ?></h1>
+    <h2>Peringkat Nilai Peserta — <?= e($namaSekolah) ?></h2>
+    <p><?= e($namaKec) ?> &nbsp;·&nbsp; Tahun Pelajaran <?= e($tahunPel) ?> &nbsp;·&nbsp; Kategori: <?= e($namaKat) ?></p>
+  </div>
+  <div class="meta">
+    <div>Dicetak: <?= $tanggalCetak ?></div>
+    <div>KKM: <?= $kkm ?></div>
+    <div>Total Peserta: <?= $total ?></div>
+  </div>
+</div>
+
+<!-- Info statistik -->
+<div class="info-bar">
+  <div><span class="lbl">Total Peserta</span><span class="val"><?= $total ?></span></div>
+  <div><span class="lbl">Nilai Tertinggi</span><span class="val"><?= $maks ?></span></div>
+  <div><span class="lbl">Nilai Terendah</span><span class="val"><?= $min ?></span></div>
+  <div><span class="lbl">Rata-rata</span><span class="val"><?= $rata ?></span></div>
+  <div><span class="lbl">Lulus (≥<?= $kkm ?>)</span><span class="val"><?= $lulus ?> / <?= $total ?></span></div>
+  <div><span class="lbl">Persentase Lulus</span><span class="val"><?= $total > 0 ? round($lulus / $total * 100) : 0 ?>%</span></div>
+</div>
+
+<!-- Tabel Peringkat -->
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px" class="center">No</th>
+      <th style="width:28px" class="center">Rank</th>
+      <th>Nama Peserta</th>
+      <th style="width:90px">Kode</th>
+      <th style="width:50px" class="center">Kelas</th>
+      <th>Kategori/Mapel</th>
+      <th style="width:45px" class="center">Benar</th>
+      <th style="width:45px" class="center">Salah</th>
+      <th style="width:45px" class="center">Kosong</th>
+      <th style="width:55px" class="center">Nilai</th>
+      <th style="width:70px" class="center">Predikat</th>
+      <th style="width:55px" class="center">Durasi</th>
+      <th style="width:110px">Tgl Selesai</th>
+    </tr>
+  </thead>
+  <tbody>
+<?php
+if (empty($rows)):
+?>
+    <tr><td colspan="13" style="text-align:center;padding:20px;color:#888">Belum ada data hasil ujian.</td></tr>
+<?php
+else:
+    $kkmLinePrinted = false;
+    foreach ($rows as $i => $h):
+        $rank      = $i + 1;
+        $nilaiInt  = (int)$h['nilai'];
+        $benar     = (int)($h['jml_benar']  ?? 0);
+        $salah     = (int)($h['jml_salah']  ?? 0);
+        $kosong    = (int)($h['jml_kosong'] ?? 0);
+        $durasi    = $h['durasi_menit'] !== null ? $h['durasi_menit'] . ' mnt' : '-';
+        [$pred]    = getPredikat($nilaiInt);
+        $isLulus   = $nilaiInt >= $kkm;
+        $rowClass  = $isLulus ? 'lulus-row' : 'gagal-row';
+
+        // Garis pemisah KKM
+        if (!$kkmLinePrinted && !$isLulus):
+            $kkmLinePrinted = true;
+?>
+    <tr class="kkm-line">
+      <td colspan="13"><span>▼ Di bawah KKM (<?= $kkm ?>)</span></td>
+    </tr>
+<?php
+        endif;
+?>
+    <tr class="<?= $rowClass ?>">
+      <td class="center"><?= $rank ?></td>
+      <td class="center rank-<?= $rank <= 3 ? 'medal' : 'num' ?>">
+        <?php if ($rank === 1): ?>🥇
+        <?php elseif ($rank === 2): ?>🥈
+        <?php elseif ($rank === 3): ?>🥉
+        <?php else: ?><span class="rank-num"><?= $rank ?></span>
+        <?php endif; ?>
+      </td>
+      <td class="nama-peserta"><?= e($h['nama']) ?></td>
+      <td class="kode"><?= e($h['kode_peserta']) ?></td>
+      <td class="center"><?= e($h['kelas'] ?? '-') ?></td>
+      <td><?= e($h['nama_kategori'] ?? '-') ?></td>
+      <td class="benar"><?= $benar ?></td>
+      <td class="salah"><?= $salah ?></td>
+      <td class="center" style="color:#64748b"><?= $kosong ?></td>
+      <td class="nilai-cell"><?= $h['nilai'] ?></td>
+      <td class="center"><span class="predikat pred-<?= $pred ?>"><?= $pred ?></span></td>
+      <td class="center"><?= $durasi ?></td>
+      <td><?= $h['waktu_selesai'] ? date('d/m/Y H:i', strtotime($h['waktu_selesai'])) : '-' ?></td>
+    </tr>
+<?php
+    endforeach;
+endif;
+?>
+  </tbody>
+  <tfoot>
+    <tr class="tfoot-stat">
+      <td colspan="6" style="text-align:left">Jumlah Peserta: <?= $total ?> &nbsp;|&nbsp; Lulus: <?= $lulus ?> &nbsp;|&nbsp; Tidak Lulus: <?= $total - $lulus ?></td>
+      <td class="center"><?= $total > 0 ? round(array_sum(array_column($rows, 'jml_benar')) / $total, 1) : 0 ?></td>
+      <td class="center"><?= $total > 0 ? round(array_sum(array_column($rows, 'jml_salah')) / $total, 1) : 0 ?></td>
+      <td class="center">-</td>
+      <td class="center"><?= $rata ?></td>
+      <td colspan="3" style="text-align:left">Rata-rata nilai: <?= $rata ?></td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- Footer Tanda Tangan -->
+<div class="doc-footer">
+  <div style="font-size:9pt;color:#555;align-self:flex-end">
+    Dokumen ini dicetak dari sistem <?= e($namaAplikasi) ?><br>
+    <?= e($namaKec) ?> — <?= $tanggalCetak ?>
+  </div>
+  <div class="ttd-box">
+    <div class="ttd-space"></div>
+    <p>Mengetahui,</p>
+    <p style="font-weight:700">Kepala Sekolah</p>
+  </div>
+  <div class="ttd-box">
+    <div class="ttd-space"></div>
+    <p>Dibuat oleh,</p>
+    <p style="font-weight:700">Operator</p>
+  </div>
+</div>
+
+<script>
+  // Auto-print jika ada param ?print=1
+  if (new URLSearchParams(location.search).get('print') === '1') {
+    window.onload = () => window.print();
+  }
+</script>
+</body>
+</html>

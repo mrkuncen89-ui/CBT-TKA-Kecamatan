@@ -1,4 +1,4 @@
-# CBT TKA Kecamatan
+# CBT TKA
 
 <div align="center">
   <img src="assets/logo.png" width="120" alt="Logo TKA Kecamatan">

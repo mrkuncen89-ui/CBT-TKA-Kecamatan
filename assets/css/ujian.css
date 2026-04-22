@@ -1,0 +1,235 @@
+/* ============================================================
+   assets/css/ujian.css — CBT Exam Interface
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --c-bg:      #f1f5f9;
+    --c-white:   #ffffff;
+    --c-border:  #e2e8f0;
+    --c-text:    #1e293b;
+    --c-muted:   #64748b;
+    --c-primary: #1a56db;
+    --c-green:   #0e9f6e;
+    --c-yellow:  #f59e0b;
+    --c-red:     #ef4444;
+    --topbar-h:  58px;
+    --progress-h: 42px;
+    --sidebar-w: 230px;
+    --radius:    12px;
+}
+body.cbt-body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    min-height: 100vh;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.cbt-topbar {
+    position: sticky; top: 0; z-index: 200;
+    height: var(--topbar-h);
+    background: #0f172a; color: #fff;
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+.cbt-peserta { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.cbt-avatar {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--c-primary);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; flex-shrink: 0;
+}
+.cbt-nama   { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbt-sekolah{ font-size: 11px; color: #94a3b8; }
+
+/* Timer */
+.cbt-timer-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.08); border-radius: 10px;
+    padding: 6px 14px; flex-shrink: 0;
+    transition: background .3s;
+}
+.cbt-timer-wrap.warn   { background: rgba(245,158,11,.25); }
+.cbt-timer-wrap.danger { background: rgba(239,68,68,.3); animation: blink .6s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.6} }
+.cbt-timer-icon { color: #94a3b8; font-size: 16px; }
+.cbt-timer-wrap.warn   .cbt-timer-icon { color: var(--c-yellow); }
+.cbt-timer-wrap.danger .cbt-timer-icon { color: var(--c-red); }
+.cbt-timer {
+    font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 700;
+    color: #4ade80; letter-spacing: 1px;
+    transition: color .3s;
+}
+.cbt-timer-wrap.warn   .cbt-timer { color: var(--c-yellow); }
+.cbt-timer-wrap.danger .cbt-timer { color: var(--c-red); }
+.cbt-timer-lbl { font-size: 10px; color: #94a3b8; }
+
+.cbt-btn-selesai {
+    padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+    background: #dc2626; color: #fff; font-weight: 700; font-size: 13px;
+    flex-shrink: 0; transition: background .2s;
+}
+.cbt-btn-selesai:hover { background: #b91c1c; }
+
+/* ── PROGRESS ───────────────────────────────────────────── */
+.cbt-progress-bar {
+    background: var(--c-white); border-bottom: 1px solid var(--c-border);
+    padding: 8px 20px;
+}
+.cbt-progress-info {
+    display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 600; color: var(--c-muted);
+    margin-bottom: 5px;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.cbt-layout {
+    display: flex;
+    min-height: calc(100vh - var(--topbar-h) - var(--progress-h));
+}
+.cbt-main {
+    flex: 1; padding: 24px 28px; max-width: 820px;
+    margin: 0 auto; overflow-y: auto;
+}
+.cbt-sidebar {
+    width: var(--sidebar-w); background: var(--c-white);
+    border-left: 1px solid var(--c-border);
+    padding: 18px 14px; flex-shrink: 0; overflow-y: auto;
+}
+@media (max-width: 768px) { .cbt-sidebar { display: none; } }
+
+/* ── SOAL META ──────────────────────────────────────────── */
+.soal-meta {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.soal-num-badge {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--c-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; flex-shrink: 0;
+}
+.soal-num-label { font-weight: 700; font-size: 14px; }
+.soal-kategori  { font-size: 11px; color: var(--c-muted); }
+
+/* ── SOAL CARD ──────────────────────────────────────────── */
+.soal-card {
+    background: var(--c-white); border-radius: var(--radius);
+    padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    margin-bottom: 20px;
+}
+.soal-teks {
+    font-size: 16px; line-height: 1.8; font-weight: 500; color: var(--c-text);
+}
+.soal-gambar-wrap { margin-top: 14px; }
+.soal-gambar {
+    max-width: 100%; max-height: 280px; border-radius: 8px;
+    border: 1px solid var(--c-border); object-fit: contain;
+}
+
+/* ── PILIHAN JAWABAN ────────────────────────────────────── */
+.pilihan-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.pilihan-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 18px; border-radius: 12px;
+    border: 2px solid var(--c-border); cursor: pointer;
+    background: var(--c-white); transition: all .18s ease;
+    user-select: none;
+}
+.pilihan-item:hover { border-color: #93c5fd; background: #eff6ff; }
+.pilihan-item.selected {
+    border-color: var(--c-primary); background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+}
+.pilihan-huruf {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--c-border); color: var(--c-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; flex-shrink: 0;
+    transition: all .18s;
+}
+.pilihan-item.selected .pilihan-huruf { background: var(--c-primary); color: #fff; }
+.pilihan-teks { flex: 1; font-size: 15px; line-height: 1.5; }
+.pilihan-check { color: var(--c-primary); font-size: 18px; opacity: 0; transition: opacity .18s; }
+.pilihan-item.selected .pilihan-check { opacity: 1; }
+
+/* ── NAVIGASI ───────────────────────────────────────────── */
+.cbt-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cbt-nav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px;
+    text-decoration: none; border: none; cursor: pointer; transition: all .18s;
+}
+.cbt-nav-btn.prev   { background: #f1f5f9; color: #475569; }
+.cbt-nav-btn.prev:hover { background: #e2e8f0; }
+.cbt-nav-btn.next   { background: var(--c-primary); color: #fff; }
+.cbt-nav-btn.next:hover { background: #1345b7; }
+.cbt-nav-btn.finish { background: var(--c-green); color: #fff; }
+.cbt-nav-btn.finish:hover { background: #047857; }
+.save-status { font-size: 12px; font-weight: 600; min-width: 100px; text-align: center; }
+
+/* ── SIDEBAR NOMOR SOAL ─────────────────────────────────── */
+.sidebar-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; color: #94a3b8; margin-bottom: 10px;
+}
+.soal-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.soal-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 2px solid var(--c-border); background: var(--c-white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--c-muted);
+    text-decoration: none; transition: all .15s;
+}
+.soal-btn:hover  { border-color: #93c5fd; color: var(--c-primary); }
+.soal-btn.dijawab { background: var(--c-green); border-color: var(--c-green); color: #fff; }
+.soal-btn.aktif  { border-color: var(--c-yellow) !important; color: var(--c-yellow); box-shadow: 0 0 0 2px #fef3c7; }
+.soal-btn.aktif.dijawab { background: var(--c-green); border-color: var(--c-yellow) !important; color: #fff; }
+
+.sidebar-legend { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+.legend-item    { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--c-muted); }
+.legend-dot     { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.legend-dot.green  { background: var(--c-green); }
+.legend-dot.gray   { background: var(--c-border); border: 1px solid #cbd5e1; }
+.legend-dot.yellow { border: 2px solid var(--c-yellow); background: #fff; }
+
+.cbt-sidebar-selesai {
+    width: 100%; padding: 10px; border-radius: 10px; border: none; cursor: pointer;
+    background: var(--c-green); color: #fff; font-weight: 700; font-size: 13px;
+    transition: background .2s;
+}
+.cbt-sidebar-selesai:hover { background: #047857; }
+
+/* ── MODAL ──────────────────────────────────────────────── */
+.cbt-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(15,23,42,.75); align-items: center; justify-content: center;
+}
+.cbt-modal-overlay.show { display: flex; }
+.cbt-modal-box {
+    background: var(--c-white); border-radius: 20px; padding: 36px 32px;
+    max-width: 440px; width: 90%; text-align: center;
+    animation: popIn .25s ease;
+}
+@keyframes popIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
+.cbt-modal-icon  { font-size: 54px; margin-bottom: 10px; }
+.cbt-modal-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+.cbt-modal-body  { color: var(--c-muted); font-size: 14px; line-height: 1.6; }
+.cbt-modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+.cbt-modal-cancel {
+    padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;
+    background: #f1f5f9; color: #475569; font-weight: 700; font-size: 14px;
+    transition: background .18s;
+}
+.cbt-modal-cancel:hover { background: #e2e8f0; }
+.cbt-modal-confirm {
+    padding: 10px 24px; border-radius: 10px;
+    background: var(--c-green); color: #fff; font-weight: 700; font-size: 14px;
+    text-decoration: none; transition: background .18s; display: inline-flex; align-items: center;
+}
+.cbt-modal-confirm:hover { background: #047857; color: #fff; }
+
+/* Keyboard hint */
+.kbd-hint { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 16px; }

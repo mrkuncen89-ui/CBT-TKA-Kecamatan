@@ -1,0 +1,39 @@
+# ========================================
+# .gitignore - CBT TKA Kecamatan
+# ========================================
+
+# --- File sensitif (JANGAN upload) ---
+config/
+config/database.php
+
+# --- Database & Backup ---
+*.sql
+backup/
+backup_*.sql
+
+# --- Folder upload siswa ---
+uploads/
+upload/
+
+# --- Log files ---
+*.log
+logs/
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Temporary ---
+tmp/
+temp/
+cache/
+
+# --- Node modules (kalau ada) ---
+node_modules/

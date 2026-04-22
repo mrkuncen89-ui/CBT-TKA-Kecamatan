@@ -3,7 +3,7 @@
 <div align="center">
   <img src="assets/logo.png" width="120" alt="Logo TKA Kecamatan">
   
-  <h3>Sistem Computer Based Test (CBT) TKA Kecamatan</h3>
+  <h3>Sistem Computer Based Test (CBT) TKA</h3>
   <p>Asesmen Sumatif Akhir Semester berbasis komputer untuk tingkat kecamatan</p>
 
   ![Version](https://img.shields.io/badge/version-1.0.0-blue)

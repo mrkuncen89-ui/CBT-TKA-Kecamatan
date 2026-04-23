@@ -33,7 +33,7 @@
 </div>
 <script>
 (function() {
-    const LOCAL_VERSION = '<?= defined("APP_VERSION") ? APP_VERSION : "1.0.3" ?>';
+    const LOCAL_VERSION = '<?= defined("APP_VERSION") ? APP_VERSION : "1.0.4" ?>';
     fetch('https://raw.githubusercontent.com/mrkuncen89-ui/CBT-TKA-Kecamatan/main/version.json?_=' + Date.now())
         .then(r => r.json())
         .then(data => {

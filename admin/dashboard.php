@@ -8,6 +8,25 @@ require_once __DIR__ . '/../core/auth.php';
 require_once __DIR__ . '/../core/helper.php';
 requireLogin('admin_kecamatan');
 
+// Cek update dari GitHub
+require_once __DIR__ . '/../config/version.php';
+$adaUpdate = false;
+$infoUpdate = [];
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, VERSION_URL);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_USERAGENT, 'TKAKecamatan/1.0.1');
+$jsonUpdate = curl_exec($ch);
+curl_close($ch);
+if ($jsonUpdate) {
+    $infoUpdate = json_decode($jsonUpdate, true);
+    if ($infoUpdate && version_compare($infoUpdate['version'], APP_VERSION, '>')) {
+        $adaUpdate = true;
+    }
+}
+
 /* ── Auto Backup Harian ──────────────────────────────────────
    Backup otomatis berjalan sekali sehari saat dashboard dibuka.
 ────────────────────────────────────────────────────────────── */
@@ -168,6 +187,7 @@ $pageTitle  = 'Dashboard';
 $activeMenu = 'dashboard';
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
 
 <!-- Welcome Banner -->
 <div class="card mb-4 border-0" style="background:linear-gradient(135deg,#1a56db 0%,#7c3aed 60%,#0ea5e9 100%);color:#fff;overflow:hidden;position:relative">

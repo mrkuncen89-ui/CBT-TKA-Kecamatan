@@ -130,7 +130,7 @@ Format kelas disimpan sebagai teks bebas — sekolah 1 rombel cukup pilih `VI`, 
 
 ## 🔄 Changelog
 
-### v1.1.0 (2026-05-01)
+### v1.0.7 (2026-05-02)
 - **Tambah:** Dukungan kelas multi-rombel (VI A, VI B, dst) untuk semua jenjang
 - **Tambah:** Filter jadwal ujian per kelas di kartu ujian
 - **Tambah:** Pembahasan soal di halaman `cek_nilai.php`

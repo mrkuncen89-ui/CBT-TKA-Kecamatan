@@ -57,6 +57,7 @@
 3. Ikuti langkah instalasi
 4. Klik shortcut **TKA Kecamatan** di Desktop
 5. Akses via browser: `http://127.0.0.1:7461/login.php`
+6. username **admin** password **cahyana**
 
 ---
 

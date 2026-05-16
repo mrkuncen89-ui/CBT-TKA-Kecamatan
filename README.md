@@ -36,6 +36,7 @@
 - ✅ Log aktivitas user
 - ✅ Monitoring server
 - ✅ **Auto-restart server** (watchdog)
+- ✅ **Aplikasi Korektor** (koreksi jawaban isian/esai)
 
 ---
 
@@ -57,7 +58,7 @@
 3. Ikuti langkah instalasi
 4. Klik shortcut **TKA Kecamatan** di Desktop
 5. Akses via browser: `http://127.0.0.1:7461/login.php`
-6. username **admin** password **cahyana**
+6. Username **admin** password **cahyana**
 
 ---
 
@@ -72,6 +73,15 @@
 
 ---
 
+## 👤 Akun Default
+
+| Role | Username | Password | Akses |
+|------|----------|----------|-------|
+| Admin | `admin` | `cahyana` | Dashboard admin penuh |
+| Korektor | `korektor` | `@korektor` | Koreksi jawaban peserta |
+
+---
+
 ## 📁 Struktur Folder
 
 ```
@@ -83,6 +93,10 @@ TKAKecamatan/
 │   ├── import_peserta.php  # Import peserta via Excel/CSV
 │   ├── export_peserta.php  # Export daftar peserta ke Excel
 │   └── ...
+├── korektor/
+│   ├── index.php           # Login & dashboard korektor
+│   ├── koreksi.php         # Halaman koreksi jawaban peserta
+│   └── ganti_password.php  # Ganti password korektor
 ├── ujian/
 │   ├── selesai.php         # Hasil ujian + pembahasan soal
 │   ├── cek_nilai.php       # Cek nilai & ranking + pembahasan
@@ -130,6 +144,11 @@ Format kelas disimpan sebagai teks bebas — sekolah 1 rombel cukup pilih `VI`, 
 ---
 
 ## 🔄 Changelog
+
+### v1.1.0 (2026-05-16)
+- **Tambah:** Aplikasi Korektor (`korektor/`) untuk koreksi jawaban peserta
+- **Tambah:** Akun korektor dengan akses terbatas (koreksi jawaban saja)
+- **Tambah:** Halaman ganti password untuk korektor
 
 ### v1.0.7 (2026-05-02)
 - **Tambah:** Dukungan kelas multi-rombel (VI A, VI B, dst) untuk semua jenjang
